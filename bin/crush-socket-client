@@ -1,0 +1,38 @@
+#!/usr/bin/env coffee
+ss = require 'super-sockets'
+lib = require '../lib'
+
+
+argv = require('optimist')
+  .usage('Usage: $0 --module=<file> --port=<number> --type=<value> --name=<name>')
+  .demand(['module', 'port', 'type', 'name'])
+  .argv
+
+
+key = 'crush-socket-client'
+type = argv.type
+name = argv.name
+port = argv.port
+module = argv.module
+
+
+try
+  mod = require module
+catch err
+  console.status key, error: err
+  process.exit 1
+
+
+socket = ss.socket argv.type
+socket.connect argv.port
+console.status key, name: name, port: port, type: type
+ignore = ['respawn']
+
+client = mod()[name]
+for event, callback of client
+  if event not in ignore and typeof callback == 'function'
+    socket.on event, callback
+    console.status key, name: name, event: event
+
+
+console.status key, name: name, status: 'ready'

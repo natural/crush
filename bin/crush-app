@@ -1,0 +1,137 @@
+#!/usr/bin/env coffee
+
+fs = require 'fs'
+path = require 'path'
+
+argv = require('optimist')
+  .usage('Usage: $0 dir [-v num]')
+  .demand(1)
+  .default('v', 0)
+  .string('v')
+  .describe('v', 'Verbosity level, 0-2')
+  .argv
+
+
+templates = (name)->
+  settings: """
+# define your settings here with the following names:
+#
+# exports.shared, exports.development, exports.production
+
+appdir = __dirname
+
+exports.shared =
+  app:
+    name: '#{name}'
+    dir: appdir
+
+"""
+
+  middleware: """
+# define and return your middleware objects here.  each entry should be
+# and object with 'call' and 'name' keys.
+
+exports = module.exports = (options)->
+  []
+
+"""
+
+  plugins: """
+# define and return your plugins here.
+
+exports = module.exports = (options)->
+  {}
+
+"""
+
+  routes: """
+# define and return your route objects here.  routes should have a key for
+# http method, a 'call' key, and optionally, 'name' and 'order' keys.
+
+exports = module.exports = (options)->
+  []
+
+"""
+
+  models: """
+# define and return your model objects here.  models can be anything, and they
+# will be set on the application object, e.g., app.get('crush').models.YourModel
+
+exports = module.exports = (options)->
+  []
+
+"""
+
+
+main = (target, verbose)->
+  projectPath = path.resolve target
+  viewsPath = "#{projectPath}/views"
+  testsPath = "#{projectPath}/tests"
+  log = info = ->
+
+  if verbose in [true, '1', '2']
+    log = -> console.log.apply console, arguments
+
+  if verbose == '2'
+    info = -> console.info.apply console, arguments
+
+  makeTestDir = (callback)->
+    path.exists testsPath, (exists)->
+      if exists
+        info "skipped existing tests path"
+        callback()
+      else
+        info "creating tests path #{projectPath}"
+        fs.mkdir testsPath, 0o777, (err)->
+          if err
+            log "error creating tests path #{testsPath}"
+            throw err
+          log "created tests path #{testsPath}"
+          callback()
+
+  makeViewDir = (callback)->
+    path.exists viewsPath, (exists)->
+      if exists
+        info "skipped existing views path"
+        makeTestDir callback
+      else
+        info "creating views path #{projectPath}"
+        fs.mkdir viewsPath, 0o777, (err)->
+          if err
+            log "error creating views path #{viewsPath}"
+            throw err
+          log "created views path #{viewsPath}"
+          makeTestDir callback
+
+  makeProjectDir = (callback)->
+    path.exists projectPath, (exists)->
+      if exists
+        info "skipped existing project path #{projectPath}"
+        makeViewDir callback
+      else
+        info "creating project path #{projectPath}"
+        fs.mkdir projectPath, 0o777, (err)->
+          if err
+            log "error creating project path #{projectPath}"
+            throw err
+          log "created project path #{projectPath}"
+          makeViewDir callback
+
+  makeProjectFiles = ->
+    for name, template of templates path.basename(target)
+      do (name, template)->
+        fn = "#{projectPath}/#{name}.coffee"
+        path.exists fn, (exists)->
+          if exists
+            log "skipped existing file #{fn}"
+          if not exists
+            info "creating new file #{fn}"
+            fs.writeFile fn, template, (err)->
+              if err
+                throw err
+              log "created file #{fn}"
+
+  makeProjectDir makeProjectFiles
+
+
+main argv._[0], argv.v

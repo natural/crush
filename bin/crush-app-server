@@ -1,0 +1,48 @@
+#!/usr/bin/env coffee
+
+# This is the main crush server startup script.  The script requires a single
+# argument, '--root', which must point to an application directory with a
+# 'settings' module.
+#
+# NB:  For automatic restart during development, this script has to have the
+# '.coffee' extension.
+#
+http = require 'http'
+net = require 'net'
+path = require 'path'
+repl = require 'repl'
+app = require '../app'
+
+argv = require('optimist')
+  .usage('Usage: $0 --root=<project>')
+  .demand(['root'])
+  .argv
+
+
+if not process.env.NODE_ENV?
+  process.env.NODE_ENV = 'production'
+
+root = path.resolve argv.root
+
+
+# Here we grab the settings (but don't use them) to ensure the top-level
+# app directory has enough to run.  This isn't strictly necessary to load
+# an application, but we choose to enforce it for the top-level app.
+#
+try
+  settings = require "#{root}/settings"
+catch err
+  console.log "Could not load settings from '#{argv.root}'.  Error: '#{err}'"
+  process.exit 1
+
+
+app root, process.env.NODE_ENV, (err, exp)->
+  port = exp.get('settings').http?.port
+  if port?
+    server = http.createServer(exp).listen port
+    console.status 'http', "server listening on port #{port}".green
+
+  srv = net.createServer (socket)->
+    global.app = exp
+    repl.start "node via TCP socket> ", socket, null, true
+  srv.listen 5002, 'localhost'
