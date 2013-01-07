@@ -4,6 +4,7 @@
 # already loaded.
 #
 path = require 'path'
+async = require 'async'
 app = require '../app'
 argv = require('optimist')(process.argv[6..])
   .usage('Usage: $0 --root=<project>')
@@ -25,11 +26,18 @@ app root, process.env.NODE_ENV, (err, app)->
   global.settings = app.get 'settings'
   console.log 'Values added to the global namespace:'.blue.bold, 'app, settings'.white.bold
 
-  add = ->
+  connects = for key, db of app.get('connections')
+    do(key, db)->
+      (cb)->
+        if db.readyState == 1
+          cb()
+        else
+          db.on 'connected', ->
+            cb()
+
+  async.series connects, (err, results)->
     modelnames = for name, model of app.get('models')
       global[name] = model
       name
     console.log 'Models added to the global namespace:'.blue.bold, (name.bold for name in modelnames).join(', ')
-  setTimeout add, 2000
-
   console.log 'Press ^C to exit'.red
