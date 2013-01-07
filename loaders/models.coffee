@@ -21,7 +21,8 @@ mongoose_extend = require 'mongoose-schema-extend'
 #
 exports = module.exports = (options, callback)->
   app = options.app
-  app.set 'models', registry
+  app.set 'models', models
+  app.set 'connections', connections
 
   databases = options.settings.databases or {}
   quiet = options.settings.modelloader?.quiet or false
@@ -46,7 +47,7 @@ exports = module.exports = (options, callback)->
 
         db.on 'connected', ->
           model = db.model name, schema, meta.collection
-          registry[name] = schema.instance = model
+          models[name] = schema.instance = model
 
           console.status 'schema',
             name: name.red
@@ -60,7 +61,11 @@ exports = module.exports = (options, callback)->
 
 # This is our module-level model registry.
 #
-exports.registry = registry = {}
+exports.models = models = {}
+
+# This is our module-level connections registry.
+#
+exports.connections = connections = {}
 
 
 
@@ -74,8 +79,6 @@ exports.registry = registry = {}
 #       mongo: 'mongodb://...'
 #     second:
 #       reuse: 'first'
-
-connections = {}
 
 connection = (name, dbs)->
   params = dbs[name]
