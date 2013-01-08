@@ -12,6 +12,7 @@
     "jade": ">= 0.25.0",
     "methods": "0.0.1",
     "mongoose": ">= 3.0.1",
+    "mongoose-pagination": "*",
     "mongoose-schema-extend": "*",
     "optimist": ">= 0.3.4",
     "super-sockets": ">= 0.0.3",
