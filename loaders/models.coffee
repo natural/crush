@@ -129,6 +129,21 @@ exports.makeSchema = makeSchema = (db, options)->
   for plugin in options.plugins or []
     schema.plugin plugin
 
+  for key, value of options.virtuals or {}
+    if typeof value == 'function'
+      get = value
+      set = null
+    else
+      get = value.get
+      set = value.set
+    path = schema.virtual(key)
+    path.get(get) if get
+    path.set(set) if set
+
+  if options.virtuals?
+    schema.set 'toObject', getters: true
+    schema.set 'toJSON', virtuals: true
+
   if options.indexes?.length
     for [keys, conf] in options.indexes or []
       # move index construction
