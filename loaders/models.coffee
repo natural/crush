@@ -129,6 +129,9 @@ exports.makeSchema = makeSchema = (db, options)->
   for plugin in options.plugins or []
     schema.plugin plugin
 
+  for key, value of options.methods or {}
+    schema.methods[key] = value
+
   for key, value of options.virtuals or {}
     if typeof value == 'function'
       get = value
