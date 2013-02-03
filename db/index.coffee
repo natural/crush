@@ -2,5 +2,6 @@
 #
 mongoose = require 'mongoose'
 pagination = require 'mongoose-pagination'
+pagination.install mongoose
 
 exports.driver = mongoose.mongo
