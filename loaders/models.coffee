@@ -24,7 +24,7 @@ exports = module.exports = (options, callback)->
   app.set 'models', models
   app.set 'connections', connections
 
-  databases = options.settings.databases or {}
+  database = options.settings.database or {}
   quiet = options.settings.modelloader?.quiet or false
 
   try
@@ -39,14 +39,15 @@ exports = module.exports = (options, callback)->
     do (schemadef)->
       (cb)->
         name = schemadef.name
-        db = connection name.toLowerCase(), databases
-
+        db = connection name, database
+        # yuck
+        connections[name] = con
         schema = makeSchema db, schemadef
         schema.app = app
         meta = schema.statics.meta
 
         db.on 'connected', ->
-          model = db.model name, schema, meta.collection
+          model = mongoose.model name, schema, meta.collection
           models[name] = schema.instance = model
 
           console.status 'schema',
@@ -80,17 +81,15 @@ exports.connections = connections = {}
 #     second:
 #       reuse: 'first'
 
-connection = (name, dbs)->
-  params = dbs[name]
-  if name of connections
-    connections[name]
-  else if params.reuse
-    connection params.reuse, dbs
-  else
-    connections[name] = mongoose.createConnection params.mongo
-    connections[name]
+con = null
 
 
+
+connection = (name, params)->
+  if not con
+    mongoose.connect params.mongo
+    con = mongoose.connection
+  con
 
 
 _cache = {}
@@ -107,13 +106,13 @@ exports.makeSchema = makeSchema = (db, options)->
     schema = parent.extend options.attributes
     collection = parent.statics.meta.collection
   else
-
     collection = options.collection
     schema = new mongoose.Schema options.attributes,
       strict: options.strict
       collection: collection
       versionKey: options.versionKey
       discriminatorKey: options.discriminatorKey
+      safe: { j: 1 }
     _cache[options.name] = schema
 
   schema.statics.meta =
