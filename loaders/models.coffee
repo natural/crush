@@ -118,6 +118,7 @@ exports.makeSchema = makeSchema = (db, options)->
   schema.statics.meta =
     name: options.name
     collection: collection
+    parent: options.parent
 
   for key, value of options.statics or {}
     schema.statics[key] = value
