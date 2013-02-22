@@ -13,6 +13,7 @@
 #     todo-app/settings.coffee, todo-app/models.coffee, etc.
 #
 exports.names = [
+  'boot'
   'settings'
   'servers'
   'middleware'
