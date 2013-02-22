@@ -41,10 +41,14 @@ install = (app, routes, quiet)->
       methods: methods.filter (method)-> route[method]
       quiet: quiet
 
+    root = app.getroot()
+
     methods.map (method)->
       if route[method]?
         middlewares = route.middlewares or []
         app[method] route.match, middlewares, route[method]
+        root.emit 'route.installed', route:route
+
 
   console.status 'router',
     installed: _.keys(routes).length
