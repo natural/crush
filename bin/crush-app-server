@@ -41,6 +41,7 @@ app root, process.env.NODE_ENV, (err, exp)->
   if port?
     server = http.createServer(exp).listen port
     console.status 'http', "server listening on port #{port}".green
+  exp.emit 'root.loaded', exp
 
   srv = net.createServer (socket)->
     global.app = exp
