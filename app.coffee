@@ -39,17 +39,17 @@ exports = module.exports = make = (dir, env, callback)->
   console.status 'app', name: app.get('name'), status: 'loading'
   options = env: env, app: app, settings: settings
 
-  load dir, options, (err, results)->
-    submakes = for decl in settings.apps or []
-      do (decl)->
-        (callback)->
-          make decl.dir, env, (err, subapp)->
-            app.use decl.mount, subapp
-            callback err, null
+  submakes = for decl in settings.apps or []
+    do (decl)->
+      (callback)->
+        make decl.dir, env, (err, subapp)->
+          app.use decl.mount, subapp
+          callback err, null
 
-    async.parallel submakes, (err, results)->
-      if err
-        console.status 'make', error: err
+  async.parallel submakes, (err, results)->
+    if err
+      console.status 'make', error: err
+    load dir, options, (err, results)->
       callback err, app
 
 
