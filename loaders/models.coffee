@@ -45,6 +45,7 @@ exports = module.exports = (options, callback)->
         schema = makeSchema db, schemadef
         schema.app = app
         meta = schema.statics.meta
+        root = options.app.getroot()
 
         db.on 'connected', ->
           model = mongoose.model name, schema, meta.collection
@@ -54,6 +55,7 @@ exports = module.exports = (options, callback)->
             name: name.red
             app: options.settings.app.name
             collection: meta.collection
+          root.emit 'model.installed', model:model
 
         cb()
 
